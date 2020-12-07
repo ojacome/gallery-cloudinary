@@ -16,13 +16,13 @@ cloudinary.config({
 const router = Router();
 
 router.get('/', async (req, res) => {
-    const photos = await Photo.find().sort().lean();
-    // console.log(photos);
+    const photos = await Photo.find().sort().lean();    
     res.render('images', {photos});
 });
 
-router.get('/images/add', (req, res) => {
-    res.render('image_form');
+router.get('/images/add', async (req, res) => {
+    const photos = await Photo.find().sort().lean();
+    res.render('image_form', {photos});
 });
 
 router.post('/images/add', async (req, res) => {    
@@ -40,7 +40,15 @@ router.post('/images/add', async (req, res) => {
 
     await newPhoto.save().catch( err => console.log(err));
     await fs.unlink(req.file.path).catch( err => console.log(err));
-    res.send('recibido');
+     res.redirect('/');
+});
+
+// eliminar foto de base y de cloudinary
+router.get('/images/delete/:id', async (req, res) => {
+    const { id } = req.params;    
+    const photoDelete = await Photo.findByIdAndDelete(id).catch( err => console.log(err));
+    const result = await cloudinary.v2.uploader.destroy(photoDelete.public_id).catch( err => console.log(err));
+    res.redirect('/');
 });
 
 module.exports = router;
